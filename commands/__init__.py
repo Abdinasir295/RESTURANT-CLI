@@ -1,5 +1,9 @@
-from .menu import menu_commands
-from .order import order_commands
-from .customer import customer_commands
+from .menu import add_menu_item, list_menu_items, update_menu_item, delete_menu_item
+from .order import create_order, list_orders, delete_order
+from .customer import add_customer, list_customers, update_customer, delete_customer
 
-__all__ = ['menu_commands', 'order_commands', 'customer_commands']
+__all__ = [
+    'add_menu_item', 'list_menu_items', 'update_menu_item', 'delete_menu_item',
+    'create_order', 'list_orders', 'delete_order',
+    'add_customer', 'list_customers', 'update_customer', 'delete_customer'
+]

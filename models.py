@@ -17,6 +17,7 @@ class Restaurant(Base):
 
     menu_items = relationship("MenuItem", back_populates="restaurant")
     orders = relationship("Order", back_populates="restaurant")
+    customers = relationship("Customer", back_populates="restaurant")
 
 class MenuItem(Base):
     __tablename__ = 'menu_items'
@@ -34,12 +35,12 @@ class Order(Base):
     __tablename__ = 'orders'
 
     id = Column(Integer, primary_key=True)
-    customer_id = Column(Integer, ForeignKey('customers.id'))
     restaurant_id = Column(Integer, ForeignKey('restaurants.id'))
+    customer_id = Column(Integer, ForeignKey('customers.id'))
     total_price = Column(Float, nullable=False)
 
-    customer = relationship("Customer", back_populates="orders")
     restaurant = relationship("Restaurant", back_populates="orders")
+    customer = relationship("Customer", back_populates="orders")
     items = relationship("MenuItem", secondary=order_items, back_populates="orders")
 
 class Customer(Base):
@@ -47,8 +48,8 @@ class Customer(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    email = Column(String, unique=True, nullable=False)
-    phone = Column(String)
+    password = Column(String, nullable=False)
+    restaurant_id = Column(Integer, ForeignKey('restaurants.id'))
 
     orders = relationship("Order", back_populates="customer")
-
+    restaurant = relationship("Restaurant", back_populates="customers")

@@ -2,70 +2,62 @@ import click
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Customer
+from werkzeug.security import generate_password_hash, check_password_hash
 
-@click.group(name='customer')
-def customer_commands():
-    """Manage customers"""
-    pass
-
-@customer_commands.command(name='add')
-@click.option('--name', prompt='Customer name', help='Name of the customer')
-@click.option('--email', prompt='Email', help='Email of the customer')
-@click.option('--phone', prompt='Phone', help='Phone number of the customer')
-def add_customer(name, email, phone):
-    """Add a new customer"""
+def add_customer():
+    name = click.prompt('Customer name')
+    password = click.prompt('Password', hide_input=True, confirmation_prompt=True)
+    restaurant_id = click.prompt('Restaurant ID', type=int)
+    
     db = next(get_db())
-    customer = Customer(name=name, email=email, phone=phone)
-    db.add(customer)
+    existing_customer = db.query(Customer).filter(Customer.name == name).first()
+    if existing_customer:
+        click.echo(f"Customer with name '{name}' already exists.")
+        return
+    
+    new_customer = Customer(name=name, password=generate_password_hash(password), restaurant_id=restaurant_id)
+    db.add(new_customer)
     db.commit()
     click.echo(f"Customer '{name}' added successfully.")
 
-@customer_commands.command(name='list')
 def list_customers():
-    """List all customers"""
+    restaurant_id = click.prompt('Restaurant ID', type=int)
     db = next(get_db())
-    customers = db.query(Customer).all()
+    customers = db.query(Customer).filter(Customer.restaurant_id == restaurant_id).all()
     if not customers:
-        click.echo("No customers found.")
+        click.echo("No customers found for this restaurant.")
         return
-
+    
     for customer in customers:
-        click.echo(f"ID: {customer.id}, Name: {customer.name}, Email: {customer.email}, Phone: {customer.phone}")
+        click.echo(f"ID: {customer.id}, Name: {customer.name}")
 
-@customer_commands.command(name='update')
-@click.option('--id', prompt='Customer ID', type=int, help='ID of the customer to update')
-@click.option('--name', help='New name of the customer')
-@click.option('--email', help='New email of the customer')
-@click.option('--phone', help='New phone number of the customer')
-def update_customer(id, name, email, phone):
-    """Update a customer"""
+def update_customer():
+    customer_id = click.prompt('Customer ID', type=int)
     db = next(get_db())
-    customer = db.query(Customer).filter(Customer.id == id).first()
+    customer = db.query(Customer).filter(Customer.id == customer_id).first()
     if not customer:
-        click.echo(f"Customer with ID {id} not found.")
+        click.echo(f"Customer with ID {customer_id} not found.")
         return
-
+    
+    name = click.prompt('New name (leave empty to keep current)', default='', show_default=False)
+    password = click.prompt('New password (leave empty to keep current)', hide_input=True, default='', show_default=False)
+    
     if name:
         customer.name = name
-    if email:
-        customer.email = email
-    if phone:
-        customer.phone = phone
-
+    if password:
+        customer.password = generate_password_hash(password)
+    
     db.commit()
-    click.echo(f"Customer with ID {id} updated successfully.")
+    click.echo(f"Customer with ID {customer_id} updated successfully.")
 
-@customer_commands.command(name='delete')
-@click.option('--id', prompt='Customer ID', type=int, help='ID of the customer to delete')
-def delete_customer(id):
-    """Delete a customer"""
+def delete_customer():
+    customer_id = click.prompt('Customer ID', type=int)
     db = next(get_db())
-    customer = db.query(Customer).filter(Customer.id == id).first()
+    customer = db.query(Customer).filter(Customer.id == customer_id).first()
     if not customer:
-        click.echo(f"Customer with ID {id} not found.")
+        click.echo(f"Customer with ID {customer_id} not found.")
         return
-
+    
     db.delete(customer)
     db.commit()
-    click.echo(f"Customer with ID {id} deleted successfully.")
-
+    click.echo(f"Customer with ID {customer_id} deleted successfully.")

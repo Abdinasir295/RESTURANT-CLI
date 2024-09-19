@@ -3,17 +3,12 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Order, MenuItem, Customer, Restaurant
 
-@click.group(name='order')
-def order_commands():
-    """Manage orders"""
-    pass
-
-@order_commands.command(name='create')
-@click.option('--customer-id', prompt='Customer ID', type=int, help='ID of the customer placing the order')
-@click.option('--restaurant-id', prompt='Restaurant ID', type=int, help='ID of the restaurant')
-@click.option('--items', prompt='Menu item IDs (comma-separated)', help='IDs of menu items in the order')
-def create_order(customer_id, restaurant_id, items):
+def create_order():
     """Create a new order"""
+    customer_id = click.prompt('Customer ID', type=int)
+    restaurant_id = click.prompt('Restaurant ID', type=int)
+    items = click.prompt('Menu item IDs (comma-separated)')
+
     db = next(get_db())
     
     customer = db.query(Customer).filter(Customer.id == customer_id).first()
@@ -43,10 +38,9 @@ def create_order(customer_id, restaurant_id, items):
     
     click.echo(f"Order created successfully. Order ID: {order.id}, Total Price: ${total_price:.2f}")
 
-@order_commands.command(name='list')
-@click.option('--customer-id', type=int, help='ID of the customer to list orders for')
-def list_orders(customer_id):
+def list_orders():
     """List all orders"""
+    customer_id = click.prompt('Customer ID (optional)', type=int, default=None, show_default=False)
     db = next(get_db())
     query = db.query(Order)
     if customer_id:
@@ -62,10 +56,9 @@ def list_orders(customer_id):
         for item in order.items:
             click.echo(f"  - {item.name}: ${item.price:.2f}")
 
-@order_commands.command(name='delete')
-@click.option('--id', prompt='Order ID', type=int, help='ID of the order to delete')
-def delete_order(id):
+def delete_order():
     """Delete an order"""
+    id = click.prompt('Order ID', type=int)
     db = next(get_db())
     order = db.query(Order).filter(Order.id == id).first()
     if not order:
@@ -75,4 +68,3 @@ def delete_order(id):
     db.delete(order)
     db.commit()
     click.echo(f"Order with ID {id} deleted successfully.")
-
